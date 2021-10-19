@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+      release: {{ .Release.Name }}
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      annotations:
+        checksum/tomcat-server-config: {{ include (print $.Template.BasePath "/tomcat-server-config.yaml") . | sha256sum }}
+        checksum/secrets: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/data-config.yaml") . | sha256sum }}
+        {{- if .Values.annotations }}
+        {{ toYaml .Values.annotations }}
+        {{- end }}
+      labels:
+        app: {{ .Chart.Name }}
+        release: {{ .Release.Name }}
+    spec:
+      initContainers:
+{{/*      Ideally, this step will become obsolete. However, as of right now (2021-10-15)*/}}
+{{/*      our container runtime does not allow mounting volumes as any other user than root.*/}}
+{{/*      Thus, we need this workaround to make files from the volume *writeable* by UID 1000.*/}}
+{{/*      For more information, see: https://github.com/moby/moby/issues/2259*/}}
+        - name: change-data-dir-access-rights
+          image: busybox:1.33
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+          args:
+            - "cp -TRv /data-readonly/ {{ .Values.dataDir }} && chown -R 1000:10001 {{ .Values.dataDir }}"
+          volumeMounts:
+            {{ range $path, $bytes := .Files.Glob ( printf "data/**") }}
+            {{ $name := base $path }}
+            - name: geoserver-config-readonly
+              mountPath: {{ printf "/data-readonly%s/%s" (index (regexSplit "^data" (dir $path) -1) 1) $name | indent 2 }}
+              subPath: {{- sha256sum (printf "%s/%s" (index (regexSplit "^data" (dir $path) -1) 1 ) $name ) | indent 2 }}
+            {{ end }}
+            - name: geoserver-config-rwx
+              mountPath: {{ .Values.dataDir }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ .Values.image }}:{{ .Values.imageTag }}
+          imagePullPolicy: IfNotPresent
+          startupProbe:
+            httpGet:
+              port: 8080
+              path: /geoserver/index.html
+            periodSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              port: 8080
+              path: /geoserver/index.html
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              port: 8080
+              path: /geoserver/index.html
+          envFrom:
+            - secretRef:
+                name: geoserver-secrets
+                optional: false
+          volumeMounts:
+            - name: geoserver-config-rwx
+              mountPath: {{ .Values.dataDir }}
+            - name: tomcat-server-config
+              mountPath: /usr/local/tomcat/conf/server.xml
+              subPath: server.xml
+              readOnly: true
+      volumes:
+        - name: geoserver-config-readonly
+          configMap:
+            name: geoserver-config-readonly
+        - name: geoserver-config-rwx
+          emptyDir: {}
+        - name: tomcat-server-config
+          secret:
+            secretName: tomcat-server-config

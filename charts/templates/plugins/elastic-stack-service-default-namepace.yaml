@@ -1,0 +1,12 @@
+# https://stackoverflow.com/questions/37221483/service-located-in-another-namespace
+# Service to reach elasticsearch from default namespace
+kind: Service
+apiVersion: v1
+metadata:
+    name: elasticsearch
+    namespace: {{ .Release.Namespace }}
+spec:
+    type: ExternalName
+    externalName: elasticsearch-master.monitoring.svc.cluster.local
+    ports:
+        - port: 9200

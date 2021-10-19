@@ -1,0 +1,49 @@
+annotations:
+  # deployment annotations
+  #key: value
+replicaCount: 1
+image: kartoza/geoserver
+imageTag: 2.18.0
+plugins:
+  # comma separated list of stable/community plugins
+  # this will set the following environment variables:
+  # COMMUNITY_EXTENSIONS && STABLE_EXTENSIONS
+  stable: css-plugin
+  community: elasticsearch-plugin,sec-keycloak-plugin
+port: 8600
+adminCredentials:
+  # set both GEOSERVER_ADMIN_USER & GEOSERVER_ADMIN_PASSWORD
+  userName: admin
+  password: "password"
+users:
+  # username: password
+  john: somethingsecret
+  doe: itsasecret
+# dataDir also sets env var: GEOSERVER_DATA_DIR
+dataDir: /data
+env:
+  INITIAL_MEMORY: 2G
+  MAXIMUM_MEMORY: 16G
+  REQUEST_TIMEOUT: 300
+
+# periodically back up your GEOSERVER_DATA_DIR to an S3 bucket
+backup:
+  # uncomment if you want periodic backups
+  #enabled: true
+  schedule: "0 1 * * *"
+  image: "alpine:3.7"
+  replicaCount: 1
+  backupStorageSpec:
+    pvc:
+      name: geoserver-backup-pvc
+      storageClassName: csi-obs-retain
+      accessMode: ReadWriteMany
+      storage: 1Gi
+    volume:
+      region: eu-de
+      storageClassName: csi-obs-retain
+      name: geoserver-backup
+      accessMode: ReadWriteMany
+      storage: 1Gi
+  geoserverStorageSpec:
+    pvcName: "geoserver-pvc"

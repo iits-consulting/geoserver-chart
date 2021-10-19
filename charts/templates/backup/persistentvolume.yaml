@@ -1,0 +1,22 @@
+{{ if .Values.backup.enabled }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "{{.Values.backup.backupStorageSpec.volume.name}}"
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - {{.Values.backup.backupStorageSpec.volume.accessMode}}
+  capacity:
+    storage: {{.Values.backup.backupStorageSpec.volume.storage}}
+  csi:
+    driver: obs.csi.everest.io
+    fsType: s3fs
+    volumeAttributes:
+      everest.io/obs-volume-type: STANDARD
+      storage.kubernetes.io/csiProvisionerIdentity: everest-csi-provisioner
+      everest.io/region: {{ .Values.backup.backupStorageSpec.volume.region }}
+    volumeHandle: {{.Values.backup.backupStorageSpec.volume.name}}
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: {{.Values.backup.backupStorageSpec.volume.storageClassName}}
+{{ end }}

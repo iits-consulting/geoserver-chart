@@ -1,0 +1,36 @@
+{{ if .Values.backup.enabled }}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ .Chart.Name }}-cronjob
+  namespace: {{ .Release.Namespace }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+      spec:
+        template:
+          metadata:
+            name: {{ .Chart.Name }}
+          spec:
+            volumes:
+              - name: geoserver-data
+                persistentVolumeClaim:
+                  claimName: {{.Values.backup.geoserverStorageSpec.pvcName}}
+              - name: backup-data
+                persistentVolumeClaim:
+                  claimName: {{.Values.backup.backupStorageSpec.pvc.name}}
+            containers:
+              - name: {{ .Chart.Name}}
+                image: {{.Values.backup.image}}
+                command:
+                  - "/bin/cp"
+                args: ["-R", "/data", "/backup/"]
+                volumeMounts:
+                  - mountPath: /data/
+                    name: geoserver-data
+                  - mountPath: /backup/
+                    name: backup-data
+            restartPolicy: Never
+{{ end }}
