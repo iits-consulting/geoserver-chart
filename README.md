@@ -1,17 +1,22 @@
-## Usage
+# Geoserver Helm Chart
 
-1. Use this git template when you create a new project like this
-   1. public repo
-   2. With all branches
-2. Add your chart under the charts folder and update Readme.MD
-3. Push changes to main
+Deploy a geoserver instance using helm.
 
-How to install:
+## Install
 
 ```shell
-    export CHART_NAME=coturn
-    export CHART_REPO_NAME=coturn-chart
-    helm repo add $CHART_REPO_NAME https://iits-consulting.github.io/$CHART_REPO_NAME/
-    helm search repo $CHART_NAME
-    helm install $CHART_NAME $CHART_REPO_NAME/$CHART_NAME
+    helm repo add iits-geoserver https://iits-consulting.github.io/geoserver-chart/
+    helm repo update
+    helm install geoserver iits-geoserver/geoserver
 ```
+
+## Configuration
+
+All configuration within [/data/](/data/) is automatically applied. If you
+change any configs via the GUI, you can fetch the live data via:
+
+```sh
+kubectl cp -n geoserver $(kubectl -n geoserver get pods -l app=geoserver -o jsonpath='{.items[0].metadata.name}'):/data/ data
+```
+
+Because routing is such a custom matter, no default ingress is provided in this helm chart.
