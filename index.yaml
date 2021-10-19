@@ -1,0 +1,12 @@
+apiVersion: v1
+entries:
+  geoserver:
+  - apiVersion: v2
+    created: "2021-10-19T13:00:52.646156393Z"
+    description: Kartoza docker geoserver
+    digest: 513b9b60d86648f9d75565b3395189c0b462c110188c62cf7919c22c5a2a0e8a
+    name: geoserver
+    urls:
+    - https://github.com/iits-consulting/geoserver-chart/releases/download/geoserver-2.15.1/geoserver-2.15.1.tgz
+    version: 2.15.1
+generated: "2021-10-19T13:00:52.646163193Z"
