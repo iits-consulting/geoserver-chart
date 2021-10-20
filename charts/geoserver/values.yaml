@@ -28,8 +28,7 @@ env:
 
 # periodically back up your GEOSERVER_DATA_DIR to an S3 bucket
 backup:
-  # uncomment if you want periodic backups
-  #enabled: true
+  enabled: false
   schedule: "0 1 * * *"
   image: "alpine:3.7"
   replicaCount: 1
