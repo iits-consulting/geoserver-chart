@@ -25,6 +25,9 @@ env:
   INITIAL_MEMORY: 2G
   MAXIMUM_MEMORY: 16G
   REQUEST_TIMEOUT: 300
+#secret:
+#  annotations:
+#    key: value
 
 # periodically back up your GEOSERVER_DATA_DIR to an S3 bucket
 backup:
