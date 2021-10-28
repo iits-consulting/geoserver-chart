@@ -1,4 +1,4 @@
 apiVersion: v2
 description: Kartoza docker geoserver
 name: geoserver
-version: 2.15.2
+version: 2.15.3
